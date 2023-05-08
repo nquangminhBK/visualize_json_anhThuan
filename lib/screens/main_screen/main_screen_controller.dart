@@ -15,7 +15,7 @@ class MainScreenController extends GetxController {
   void onInit() {
     emailOrder = List<String>.from(
         jsonDecode(Get.find<SharedPreferences>().getString("emailOrder") ?? "[]"));
-    print(emailOrder);
+    super.onInit();
   }
 
   saveEmailOrder(String input) {
@@ -23,24 +23,23 @@ class MainScreenController extends GetxController {
     Get.find<SharedPreferences>().setString("emailOrder", jsonEncode(emails));
     print("minh check $emailOrder");
     emailOrder = emails;
-    _convertData();
+    _convertDataAndSortByEmailOrder();
     update();
   }
 
   onInputJson(String input) {
     inputJson = input;
-    _convertData();
+    _convertDataAndSortByEmailOrder();
   }
 
-  void _convertData() {
+  void _convertDataAndSortByEmailOrder() {
     dynamic json;
     try {
       json = jsonDecode(inputJson);
     } catch (e) {}
     if (json != null) {
       modelData = ModelData.fromJson(json);
-      Map<String, TrackedHours> temp = mergeData(modelData?.data?.trackedHours ?? []);
-      uiData = [...temp.values];
+      uiData = [...mergeData(modelData?.data?.trackedHours ?? [])];
       uiData.sort((a, b) {
         int indexA = emailOrder.indexOf(a.developerEmail ?? "");
         int indexB = emailOrder.indexOf(b.developerEmail ?? "");
@@ -51,17 +50,15 @@ class MainScreenController extends GetxController {
         } else if (indexB >= 0) {
           return 1;
         } else {
-          return (a.developerEmail?? "").compareTo(b.developerEmail ?? "");
+          return (a.developerEmail ?? "").compareTo(b.developerEmail ?? "");
         }
       });
       copiedString = getCopiedString(uiData);
-      update();
-      print(modelData?.success);
     }
     update();
   }
 
-  Map<String, TrackedHours> mergeData(List<TrackedHours> input) {
+  List<TrackedHours> mergeData(List<TrackedHours> input) {
     Map<String, TrackedHours> result = {};
     for (var trackedHour in input) {
       String expertName = trackedHour.developerName ?? "";
@@ -78,7 +75,7 @@ class MainScreenController extends GetxController {
         result[expertName] = newTrackerHours;
       }
     }
-    return result;
+    return result.values.toList();
   }
 
   String getCopiedString(List<TrackedHours> input) {
