@@ -2,26 +2,63 @@ import 'dart:convert';
 
 import 'package:get/get.dart';
 import 'package:visualize_the_json_web/model/model_data.dart';
+import 'package:visualize_the_json_web/shared_preferences.dart';
 
 class MainScreenController extends GetxController {
+  String inputJson = "";
   ModelData? modelData;
-  Map<String, TrackedHours> uiData = {};
+  List<TrackedHours> uiData = [];
   String copiedString = "";
+  List<String> emailOrder = [];
 
+  @override
+  void onInit() {
+    emailOrder = List<String>.from(
+        jsonDecode(Get.find<SharedPreferences>().getString("emailOrder") ?? "[]"));
+    print(emailOrder);
+  }
 
+  saveEmailOrder(String input) {
+    List<String> emails = input.trim().split("\n").map((e) => e.trim().toLowerCase()).toList();
+    Get.find<SharedPreferences>().setString("emailOrder", jsonEncode(emails));
+    print("minh check $emailOrder");
+    emailOrder = emails;
+    _convertData();
+    update();
+  }
 
   onInputJson(String input) {
-    dynamic json = null;
+    inputJson = input;
+    _convertData();
+  }
+
+  void _convertData() {
+    dynamic json;
     try {
-      json = jsonDecode(input);
+      json = jsonDecode(inputJson);
     } catch (e) {}
     if (json != null) {
       modelData = ModelData.fromJson(json);
-      uiData = mergeData(modelData?.data?.trackedHours ?? []);
+      Map<String, TrackedHours> temp = mergeData(modelData?.data?.trackedHours ?? []);
+      uiData = [...temp.values];
+      uiData.sort((a, b) {
+        int indexA = emailOrder.indexOf(a.developerEmail ?? "");
+        int indexB = emailOrder.indexOf(b.developerEmail ?? "");
+        if (indexA >= 0 && indexB >= 0) {
+          return indexA.compareTo(indexB);
+        } else if (indexA >= 0) {
+          return -1;
+        } else if (indexB >= 0) {
+          return 1;
+        } else {
+          return (a.developerEmail?? "").compareTo(b.developerEmail ?? "");
+        }
+      });
       copiedString = getCopiedString(uiData);
       update();
       print(modelData?.success);
     }
+    update();
   }
 
   Map<String, TrackedHours> mergeData(List<TrackedHours> input) {
@@ -44,15 +81,15 @@ class MainScreenController extends GetxController {
     return result;
   }
 
-  String getCopiedString(Map<String, TrackedHours> input) {
+  String getCopiedString(List<TrackedHours> input) {
     String result = "";
-    input.forEach((key, value) {
+    for (var value in input) {
       if (result.isEmpty) {
         result = "${value.trackedSecs}";
       } else {
         result = "$result\n${value.trackedSecs}";
       }
-    });
+    }
     return result;
   }
 }
