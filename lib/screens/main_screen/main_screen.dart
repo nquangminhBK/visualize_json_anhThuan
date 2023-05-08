@@ -52,11 +52,20 @@ class MainScreen extends StatelessWidget {
                             children: [
                               AnimatedClickableWidget(
                                 onPress: () {
-                                  showDialog(context: context, builder: (context) {
-                                    return DialogSetupEmailsOrder(currentOrder: controller.emailOrder, onSubmit: (text){
-                                      controller.saveEmailOrder(text);
-                                    });
-                                  });
+                                  showDialog(
+                                      context: context,
+                                      builder: (context) {
+                                        return DialogSetupEmailsOrder(
+                                            currentOrder: controller.emailOrder,
+                                            onSubmit: (text) {
+                                              controller.saveEmailOrder(text);
+                                              Get.back();
+                                              Get.showSnackbar(const GetSnackBar(
+                                                message: 'Setup successfully',
+                                                duration: Duration(seconds: 2),
+                                              ));
+                                            });
+                                      });
                                 },
                                 color: Colors.transparent,
                                 child: Container(
@@ -66,6 +75,46 @@ class MainScreen extends StatelessWidget {
                                   padding: const EdgeInsets.all(10),
                                   child: Row(
                                     children: const [Icon(Icons.settings), Text('Setup the order')],
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(
+                                width: 30,
+                              ),
+                              Container(
+                                width: 250,
+                                height: 50,
+                                decoration: BoxDecoration(
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(width: 1, color: Colors.grey),
+                                ),
+                                padding: const EdgeInsets.all(10),
+                                child: TextField(
+                                  autofocus: true,
+                                  maxLines: 1,
+                                  textInputAction: TextInputAction.done,
+                                  onChanged: (text) {
+                                    controller.saveFormatterString(text);
+                                  },
+                                  style: const TextStyle(color: Colors.black),
+                                  textAlign: TextAlign.left,
+                                  cursorColor: Colors.grey,
+                                  keyboardType: TextInputType.multiline,
+                                  decoration: InputDecoration(
+                                    hintText: "format time before copy",
+                                    border: OutlineInputBorder(
+                                      borderRadius: BorderRadius.circular(10.0),
+                                      borderSide: const BorderSide(
+                                        color: Colors.grey,
+                                        width: 1.0,
+                                      ),
+                                    ),
+                                    enabledBorder: const UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.grey),
+                                    ),
+                                    focusedBorder: const UnderlineInputBorder(
+                                      borderSide: BorderSide(color: Colors.grey),
+                                    ),
                                   ),
                                 ),
                               ),
@@ -104,12 +153,12 @@ class MainScreen extends StatelessWidget {
                                     ],
                                   ),
                                 ),
-                              )
+                              ),
                             ],
                           ),
                         ),
                         Expanded(
-                            child: controller.modelData?.data?.trackedHours != null
+                            child: controller.uiData.isNotEmpty
                                 ? VisualizeContainer(
                                     trackerHours: controller.uiData,
                                   )
@@ -253,7 +302,7 @@ class VisualizeContainer extends StatelessWidget {
                         height: 10,
                       ),
                       Text(
-                        formattedTime ?? "",
+                        "${trackedHour.trackedSecs}s - $formattedTime" ,
                         style: const TextStyle(color: Colors.black),
                       )
                     ],

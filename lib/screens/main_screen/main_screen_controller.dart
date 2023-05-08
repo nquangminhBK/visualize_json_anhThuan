@@ -6,40 +6,52 @@ import 'package:visualize_the_json_web/shared_preferences.dart';
 
 class MainScreenController extends GetxController {
   String inputJson = "";
-  ModelData? modelData;
   List<TrackedHours> uiData = [];
   String copiedString = "";
   List<String> emailOrder = [];
+  String formatterString = "";
 
   @override
   void onInit() {
     emailOrder = List<String>.from(
         jsonDecode(Get.find<SharedPreferences>().getString("emailOrder") ?? "[]"));
+    formatterString = Get.find<SharedPreferences>().getString("formatterString") ?? "";
+    update();
     super.onInit();
   }
 
   saveEmailOrder(String input) {
     List<String> emails = input.trim().split("\n").map((e) => e.trim().toLowerCase()).toList();
     Get.find<SharedPreferences>().setString("emailOrder", jsonEncode(emails));
-    print("minh check $emailOrder");
     emailOrder = emails;
-    _convertDataAndSortByEmailOrder();
+    uiData = _convertDataAndSortByEmailOrder(inputJson, emailOrder);
+    copiedString = _getCopiedString(uiData, formatterString);
+    update();
+  }
+
+  saveFormatterString(String input) {
+    formatterString = input;
+    Get.find<SharedPreferences>().setString("formatterString", input);
+    copiedString = _getCopiedString(uiData, formatterString);
     update();
   }
 
   onInputJson(String input) {
     inputJson = input;
-    _convertDataAndSortByEmailOrder();
+    uiData = _convertDataAndSortByEmailOrder(inputJson, emailOrder);
+    copiedString = _getCopiedString(uiData, formatterString);
+    update();
   }
 
-  void _convertDataAndSortByEmailOrder() {
+  List<TrackedHours> _convertDataAndSortByEmailOrder(String inputJson, List<String> emailOrder) {
+    List<TrackedHours> uiData = [];
     dynamic json;
     try {
       json = jsonDecode(inputJson);
     } catch (e) {}
     if (json != null) {
-      modelData = ModelData.fromJson(json);
-      uiData = [...mergeData(modelData?.data?.trackedHours ?? [])];
+      ModelData? modelData = ModelData.fromJson(json);
+      uiData = [..._mergeData(modelData.data?.trackedHours ?? [])];
       uiData.sort((a, b) {
         int indexA = emailOrder.indexOf(a.developerEmail ?? "");
         int indexB = emailOrder.indexOf(b.developerEmail ?? "");
@@ -53,12 +65,11 @@ class MainScreenController extends GetxController {
           return (a.developerEmail ?? "").compareTo(b.developerEmail ?? "");
         }
       });
-      copiedString = getCopiedString(uiData);
     }
-    update();
+    return uiData;
   }
 
-  List<TrackedHours> mergeData(List<TrackedHours> input) {
+  List<TrackedHours> _mergeData(List<TrackedHours> input) {
     Map<String, TrackedHours> result = {};
     for (var trackedHour in input) {
       String expertName = trackedHour.developerName ?? "";
@@ -78,15 +89,20 @@ class MainScreenController extends GetxController {
     return result.values.toList();
   }
 
-  String getCopiedString(List<TrackedHours> input) {
+  String _getCopiedString(List<TrackedHours> input, String formatterString) {
     String result = "";
     for (var value in input) {
       if (result.isEmpty) {
-        result = "${value.trackedSecs}";
+        result = formatTheTimeWithFormatterString("${value.trackedSecs}", formatterString);
       } else {
-        result = "$result\n${value.trackedSecs}";
+        result =
+            "$result\n${formatTheTimeWithFormatterString("${value.trackedSecs}", formatterString)}";
       }
     }
     return result;
+  }
+
+  String formatTheTimeWithFormatterString(String input, String formatterString) {
+    return formatterString.replaceAll("@", input);
   }
 }
