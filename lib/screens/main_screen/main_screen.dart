@@ -50,110 +50,21 @@ class MainScreen extends StatelessWidget {
                           height: 80,
                           child: Row(
                             children: [
-                              AnimatedClickableWidget(
-                                onPress: () {
-                                  showDialog(
-                                      context: context,
-                                      builder: (context) {
-                                        return DialogSetupEmailsOrder(
-                                            currentOrder: controller.emailOrder,
-                                            onSubmit: (text) {
-                                              controller.saveEmailOrder(text);
-                                              Get.back();
-                                              Get.showSnackbar(const GetSnackBar(
-                                                message: 'Setup successfully',
-                                                duration: Duration(seconds: 2),
-                                              ));
-                                            });
-                                      });
-                                },
-                                color: Colors.transparent,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: Colors.deepPurple.withOpacity(0.3)),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Row(
-                                    children: const [Icon(Icons.settings), Text('Setup the order')],
-                                  ),
-                                ),
+                              SetupTheOrderEmailsWidget(
+                                controller: controller,
                               ),
                               const SizedBox(
                                 width: 30,
                               ),
-                              Container(
-                                width: 250,
-                                height: 50,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(20),
-                                  border: Border.all(width: 1, color: Colors.grey),
-                                ),
-                                padding: const EdgeInsets.all(10),
-                                child: TextField(
-                                  autofocus: true,
-                                  maxLines: 1,
-                                  textInputAction: TextInputAction.done,
-                                  onChanged: (text) {
-                                    controller.saveFormatterString(text);
-                                  },
-                                  style: const TextStyle(color: Colors.black),
-                                  textAlign: TextAlign.left,
-                                  cursorColor: Colors.grey,
-                                  keyboardType: TextInputType.multiline,
-                                  decoration: InputDecoration(
-                                    hintText: "format time before copy",
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(10.0),
-                                      borderSide: const BorderSide(
-                                        color: Colors.grey,
-                                        width: 1.0,
-                                      ),
-                                    ),
-                                    enabledBorder: const UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.grey),
-                                    ),
-                                    focusedBorder: const UnderlineInputBorder(
-                                      borderSide: BorderSide(color: Colors.grey),
-                                    ),
-                                  ),
-                                ),
+                              FormatterStringTextField(
+                                controller: controller,
                               ),
                               const SizedBox(
                                 width: 30,
                               ),
-                              AnimatedClickableWidget(
-                                onPress: () {
-                                  if (controller.copiedString.isEmpty) {
-                                    Get.showSnackbar(const GetSnackBar(
-                                      message: 'Input the Json first',
-                                      duration: Duration(seconds: 2),
-                                    ));
-                                    return;
-                                  }
-                                  Clipboard.setData(ClipboardData(text: controller.copiedString))
-                                      .then(
-                                    (_) {
-                                      Get.showSnackbar(const GetSnackBar(
-                                        message: 'Copied',
-                                        duration: Duration(seconds: 2),
-                                      ));
-                                    },
-                                  );
-                                },
-                                color: Colors.transparent,
-                                child: Container(
-                                  decoration: BoxDecoration(
-                                      borderRadius: BorderRadius.circular(20),
-                                      color: Colors.green.withOpacity(0.3)),
-                                  padding: const EdgeInsets.all(10),
-                                  child: Row(
-                                    children: const [
-                                      Icon(Icons.copy_rounded),
-                                      Text('Copy the tracked time by saved order')
-                                    ],
-                                  ),
-                                ),
-                              ),
+                              CopyTheTrackedTimeWidget(
+                                controller: controller,
+                              )
                             ],
                           ),
                         ),
@@ -302,7 +213,7 @@ class VisualizeContainer extends StatelessWidget {
                         height: 10,
                       ),
                       Text(
-                        "${trackedHour.trackedSecs}s - $formattedTime" ,
+                        "${trackedHour.trackedSecs}s - $formattedTime",
                         style: const TextStyle(color: Colors.black),
                       )
                     ],
@@ -316,6 +227,137 @@ class VisualizeContainer extends StatelessWidget {
           );
         },
         itemCount: trackerHours.length,
+      ),
+    );
+  }
+}
+
+class FormatterStringTextField extends StatefulWidget {
+  const FormatterStringTextField({required this.controller, Key? key}) : super(key: key);
+  final MainScreenController controller;
+
+  @override
+  State<FormatterStringTextField> createState() => _FormatterStringTextFieldState();
+}
+
+class _FormatterStringTextFieldState extends State<FormatterStringTextField> {
+  TextEditingController textEditingController = TextEditingController();
+  @override
+  void initState() {
+    textEditingController.text = widget.controller.formatterString;
+    super.initState();
+  }
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 250,
+      height: 50,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(width: 1, color: Colors.grey),
+      ),
+      padding: const EdgeInsets.all(10),
+      child: TextField(
+        controller: textEditingController,
+        autofocus: true,
+        maxLines: 1,
+        textInputAction: TextInputAction.done,
+        onChanged: (text) {
+          widget.controller.saveFormatterString(text);
+        },
+        style: const TextStyle(color: Colors.black),
+        textAlign: TextAlign.left,
+        cursorColor: Colors.grey,
+        keyboardType: TextInputType.multiline,
+        decoration: InputDecoration(
+          hintText: "format time before copy",
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(10.0),
+            borderSide: const BorderSide(
+              color: Colors.grey,
+              width: 1.0,
+            ),
+          ),
+          enabledBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+          focusedBorder: const UnderlineInputBorder(
+            borderSide: BorderSide(color: Colors.grey),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class SetupTheOrderEmailsWidget extends StatelessWidget {
+  const SetupTheOrderEmailsWidget({required this.controller, Key? key}) : super(key: key);
+  final MainScreenController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedClickableWidget(
+      onPress: () {
+        showDialog(
+            context: context,
+            builder: (context) {
+              return DialogSetupEmailsOrder(
+                  currentOrder: controller.emailOrder,
+                  onSubmit: (text) {
+                    controller.saveEmailOrder(text);
+                    Get.back();
+                    Get.showSnackbar(const GetSnackBar(
+                      message: 'Setup successfully',
+                      duration: Duration(seconds: 2),
+                    ));
+                  });
+            });
+      },
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20), color: Colors.deepPurple.withOpacity(0.3)),
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          children: const [Icon(Icons.settings), Text('Setup the order')],
+        ),
+      ),
+    );
+  }
+}
+
+class CopyTheTrackedTimeWidget extends StatelessWidget {
+  const CopyTheTrackedTimeWidget({required this.controller, Key? key}) : super(key: key);
+  final MainScreenController controller;
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedClickableWidget(
+      onPress: () {
+        if (controller.copiedString.isEmpty) {
+          Get.showSnackbar(const GetSnackBar(
+            message: 'Input the Json first',
+            duration: Duration(seconds: 2),
+          ));
+          return;
+        }
+        Clipboard.setData(ClipboardData(text: controller.copiedString)).then(
+          (_) {
+            Get.showSnackbar(const GetSnackBar(
+              message: 'Copied',
+              duration: Duration(seconds: 2),
+            ));
+          },
+        );
+      },
+      color: Colors.transparent,
+      child: Container(
+        decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20), color: Colors.green.withOpacity(0.3)),
+        padding: const EdgeInsets.all(10),
+        child: Row(
+          children: const [Icon(Icons.copy_rounded), Text('Copy the tracked time by saved order')],
+        ),
       ),
     );
   }
