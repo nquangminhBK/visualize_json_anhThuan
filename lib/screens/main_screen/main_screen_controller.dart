@@ -113,6 +113,7 @@ class MainScreenController extends GetxController {
   }
 
   String formatTheTimeWithFormatterString(String input, String formatterString) {
+    if (formatterString.isEmpty) return input;
     return formatterString.replaceAll("@", input);
   }
 
