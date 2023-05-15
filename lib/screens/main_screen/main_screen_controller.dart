@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math';
 
 import 'package:get/get.dart';
 import 'package:visualize_the_json_web/model/model_data.dart';
@@ -52,6 +53,15 @@ class MainScreenController extends GetxController {
     if (json != null) {
       ModelData? modelData = ModelData.fromJson(json);
       uiData = [..._mergeData(modelData.data?.trackedHours ?? [])];
+      for (String email in emailOrder) {
+        if (uiData.firstWhereOrNull((element) => element.developerEmail == email) == null) {
+          uiData.add(TrackedHours(id: _generateARandomId(uiData),
+              projectName: "Un-allocate",
+              developerEmail: email,
+              developerName: email,
+              trackedSecs: 0));
+        }
+      }
       uiData.sort((a, b) {
         int indexA = emailOrder.indexOf(a.developerEmail ?? "");
         int indexB = emailOrder.indexOf(b.developerEmail ?? "");
@@ -96,7 +106,7 @@ class MainScreenController extends GetxController {
         result = formatTheTimeWithFormatterString("${value.trackedSecs}", formatterString);
       } else {
         result =
-            "$result\n${formatTheTimeWithFormatterString("${value.trackedSecs}", formatterString)}";
+        "$result\n${formatTheTimeWithFormatterString("${value.trackedSecs}", formatterString)}";
       }
     }
     return result;
@@ -104,5 +114,14 @@ class MainScreenController extends GetxController {
 
   String formatTheTimeWithFormatterString(String input, String formatterString) {
     return formatterString.replaceAll("@", input);
+  }
+
+  int _generateARandomId(List<TrackedHours> uiData) {
+    int maxInt = (pow(2, 32) - 1).toInt();
+    int result = 0;
+    do {
+      result = Random().nextInt(maxInt + 1);
+    } while (uiData.firstWhereOrNull((element) => element.id == result) != null);
+    return result;
   }
 }
